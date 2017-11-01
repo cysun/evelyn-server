@@ -11,7 +11,7 @@ const cysun = {
     email: 'cysun@aol.com'
 };
 
-describe('Users API Tests:', function () {
+describe('Books API Tests:', function () {
 
     let cysunToken = '';
 
@@ -26,30 +26,16 @@ describe('Users API Tests:', function () {
         });
     });
 
-    it('Update User With No Token', function (done) {
-        api.put({
-            url: '/users/' + cysun.id,
-            body: {
-                email: cysun.email
-            }
-        }, function (err, res, body) {
-            expect(res.statusCode).toBe(401);
-            done();
-        });
-    });
-
-    it('Update User With Cysun Token', function (done) {
-        api.put({
-            url: '/users/' + cysun.id,
+    it('Get All Books', function (done) {
+        api.get({
+            url: '/books/',
             headers: {
                 'Authorization': 'Bearer ' + cysunToken
-            },
-            body: {
-                email: cysun.email
             }
         }, function (err, res, body) {
             expect(res.statusCode).toBe(200);
-            expect(body.email).toBe(cysun.email);
+            expect(body.length).toBe(2);
+            expect(body[0].title).toBe('Test Book 2');
             done();
         });
     });

@@ -33,12 +33,22 @@ app.use(passport.initialize());
 
 const login = require('./controllers/login.controller');
 const users = require('./controllers/users.controller');
+const books = require('./controllers/books.controller');
+const bookmarks = require('./controllers/bookmarks.controller');
 
 app.use('/api/login', login);
 app.use('/api/users', passport.authenticate('jwt', {
   session: false,
   failWithError: true
 }), users);
+app.use('/api/books', passport.authenticate('jwt', {
+  session: false,
+  failWithError: true
+}), books);
+app.use('/api/bookmarks', passport.authenticate('jwt', {
+  session: false,
+  failWithError: true
+}), bookmarks);
 
 /* error-handling middleware */
 
@@ -56,7 +66,10 @@ app.use(function (req, res, next) {
 app.use(function (err, req, res, next) {
   if (req.originalUrl.startsWith('/api/')) {
     res.status(err.status || 500).json(new ApiError(err.message));
-    winston.error(err);
+    if (err.status == 401)
+      winston.error('Authentication failed.');
+    else
+      winston.error(err);
     return;
   }
   next(err);

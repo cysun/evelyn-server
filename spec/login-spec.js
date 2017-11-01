@@ -17,7 +17,7 @@ const badRequest = {
     password: 'abcd'
 };
 
-describe("Login API Tests", function () {
+describe("Login API Tests:", function () {
 
     it("Successful Login", function (done) {
         loginApi.post({

@@ -12,7 +12,7 @@ const ApiError = require('../models/error.model');
 const _ = require('lodash');
 const User = require('mongoose').model('User');
 
-// Update User -- note that only certain fields are allowed to be changed.
+// Update user -- note that only certain fields are allowed to be changed.
 router.put('/:id', function (req, res, next) {
 
   if (req.user._id !== req.params.id) {

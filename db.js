@@ -55,3 +55,5 @@ process.on('SIGTERM', () => {
 
 // Load the models
 require('./models/user.model');
+require('./models/book.model');
+require('./models/bookmark.model');
