@@ -52,11 +52,6 @@ function insertBooks(db) {
         _id: new mongodb.ObjectID('111111111111111111111111'),
         title: 'Test Book 1',
         author: 'John Doe',
-        content: {
-            _id: new mongodb.ObjectID('111111111111111111111111'),
-            name: 'test-book-1.txt',
-            contentType: 'plain/text'
-        },
         date: new Date(2016, 5, 15),
         deleted: false,
         __v: 0
@@ -64,11 +59,6 @@ function insertBooks(db) {
         _id: new mongodb.ObjectID('222222222222222222222222'),
         title: 'Test Book 2',
         author: 'Jane Doe',
-        content: {
-            _id: new mongodb.ObjectID('222222222222222222222222'),
-            name: 'test-book-2.txt',
-            contentType: 'plain/text'
-        },
         date: new Date(2017, 9, 10),
         deleted: false,
         __v: 0

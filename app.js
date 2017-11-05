@@ -34,21 +34,20 @@ app.use(passport.initialize());
 const login = require('./controllers/login.controller');
 const users = require('./controllers/users.controller');
 const books = require('./controllers/books.controller');
+const files = require('./controllers/files.controller');
 const bookmarks = require('./controllers/bookmarks.controller');
 
 app.use('/api/login', login);
-app.use('/api/users', passport.authenticate('jwt', {
+app.use('/api/', passport.authenticate('jwt', {
   session: false,
   failWithError: true
-}), users);
-app.use('/api/books', passport.authenticate('jwt', {
-  session: false,
-  failWithError: true
-}), books);
-app.use('/api/bookmarks', passport.authenticate('jwt', {
-  session: false,
-  failWithError: true
-}), bookmarks);
+}));
+
+// everything after this requires authentication
+app.use('/api/users', users);
+app.use('/api/books', books);
+app.use('/api/files', files);
+app.use('/api/bookmarks', bookmarks);
 
 /* error-handling middleware */
 

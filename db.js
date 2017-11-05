@@ -6,7 +6,7 @@ const bluebird = require('bluebird');
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
 
-const dbURI = process.env.EVELYN_DBURI || 'mongodb://localhost/evelyn';
+const dbURI = process.env.APP_DBURI || 'mongodb://localhost/evelyn';
 mongoose.Promise = bluebird;
 mongoose.connect(dbURI, {
     useMongoClient: true,

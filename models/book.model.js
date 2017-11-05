@@ -1,19 +1,10 @@
 const mongoose = require('mongoose');
 
-const fileSchema = new mongoose.Schema({
-
-    name: {
-        type: String,
-        required: true
-    },
-
-    contentType: {
-        type: String,
-        required: true
-    }
-
-});
-
+/* The book content file is required and is expected to be a Markdown file with
+ * .md or .txt extension. The cover file is optional, and the acceptable
+ * extensions are .jpg, .png, and .gif. Generated thumbnail will have the same
+ * extenstion (i.e. format) as the uploaded cover.
+ */
 const bookSchema = new mongoose.Schema({
 
     title: {
@@ -29,14 +20,7 @@ const bookSchema = new mongoose.Schema({
 
     notes: String,
 
-    content: {
-        type: fileSchema,
-        required: true
-    },
-
-    cover: fileSchema,
-
-    thumbnail: fileSchema,
+    coverExt: String,
 
     date: {
         type: Date,
@@ -52,5 +36,4 @@ const bookSchema = new mongoose.Schema({
 
 });
 
-mongoose.model('File', fileSchema);
 mongoose.model('Book', bookSchema);
