@@ -51,6 +51,19 @@ router.get('/', function (req, res, next) {
     });
 });
 
+// Search books
+router.get('/search', function (req, res, next) {
+
+    Book.find({
+        $text: {
+            $search: req.query.term
+        }
+    }, (err, books) => {
+        if (err) return next(err);
+        res.status(200).json(books);
+    });
+});
+
 // Get book
 router.get('/:id', function (req, res, next) {
 

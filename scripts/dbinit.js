@@ -50,15 +50,15 @@ function insertUsers(db) {
 function insertBooks(db) {
     return db.collection('books').insertMany([{
         _id: new mongodb.ObjectID('111111111111111111111111'),
-        title: 'Test Book 1',
+        title: 'Test Book',
         author: 'John Doe',
         date: new Date(2016, 5, 15),
         deleted: false,
         __v: 0
     }, {
         _id: new mongodb.ObjectID('222222222222222222222222'),
-        title: 'Test Book 2',
-        author: 'Jane Doe',
+        title: '测试书籍',
+        author: '张老三',
         date: new Date(2017, 9, 10),
         deleted: false,
         __v: 0
