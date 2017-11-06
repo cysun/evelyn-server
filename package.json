@@ -13,6 +13,7 @@
     "debug": "~2.6.9",
     "dotenv": "^4.0.0",
     "ejs": "~2.5.7",
+    "epub-gen": "0.0.17",
     "express": "~4.15.5",
     "jsonwebtoken": "^8.1.0",
     "lodash": "^4.17.4",
@@ -23,6 +24,7 @@
     "passport-jwt": "^3.0.1",
     "serve-favicon": "~2.4.5",
     "sharp": "^0.18.4",
+    "showdown": "^1.8.1",
     "winston": "^2.4.0"
   },
   "devDependencies": {

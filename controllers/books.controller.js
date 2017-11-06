@@ -24,6 +24,8 @@ const upload = multer({
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const Epub = require('epub-gen');
+const Ebook = require('../utils/ebook');
 
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
@@ -70,6 +72,27 @@ router.get('/:id', function (req, res, next) {
     Book.findById(req.params.id, (err, book) => {
         if (err) return next(err);
         res.status(200).json(book);
+    });
+});
+
+// Get Ebook
+router.get('/:id/ebook', function (req, res, next) {
+
+    Book.findById(req.params.id, (err, book) => {
+        if (err) return next(err);
+        Ebook(book, (ebook) => {
+            new Epub({
+                title: ebook.title,
+                author: ebook.author,
+                cover: ebook.cover,
+                content: ebook.chapters,
+                output: path.join(fileDir, book._id + '.epub')
+            }).promise.then(function () {
+                res.status(200).json(book);
+            }, function (err) {
+                return next(err);
+            });
+        });
     });
 });
 

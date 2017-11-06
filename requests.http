@@ -4,6 +4,16 @@
 # do not have JWT tokens. For proper testing with authentication on, please run
 # the Jasmine specs using "npm test".
 
+### Login
+
+POST http://localhost:3000/api/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "username": "cysun",
+    "password": "abcd"
+}
+
 ### Get All books
 
 GET http://localhost:3000/api/books/ HTTP/1.1
