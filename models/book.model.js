@@ -7,38 +7,41 @@ const mongoose = require('mongoose');
  */
 const bookSchema = new mongoose.Schema({
 
-    title: {
-        type: String,
-        required: true,
-        unique: true
-    },
+  title: {
+    type: String,
+    required: true,
+    unique: true
+  },
 
-    author: {
-        type: String,
-        required: true
-    },
+  author: {
+    type: String,
+    required: true
+  },
 
-    notes: String,
+  notes: String,
 
-    coverExt: String,
+  coverExt: String,
 
-    date: {
-        type: Date,
-        required: true,
-        default: Date.now
-    },
+  date: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
 
-    deleted: {
-        type: Boolean,
-        required: true,
-        default: false
-    }
-
+  deleted: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
+}, {
+  toJSON: {
+    virtuals: true
+  }
 });
 
 bookSchema.index({
-    title: 'text',
-    author: 'text'
+  title: 'text',
+  author: 'text'
 });
 
 mongoose.model('Book', bookSchema);

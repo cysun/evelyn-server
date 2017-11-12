@@ -6,21 +6,21 @@
  */
 module.exports = class ApiError {
 
-    constructor(message) {
-        this.error = {};
-        this.error.message = message;
-    }
+  constructor(message) {
+    this.error = {};
+    this.error.message = message;
+  }
 
-    static error401() {
-        return new ApiError('Authentication failed');
-    }
+  static error401() {
+    return new ApiError('Authentication failed');
+  }
 
-    static error403() {
-        return new ApiError('Access denied.')
-    }
+  static error403() {
+    return new ApiError('Access denied.')
+  }
 
-    static error404() {
-        return new ApiError('Resource not found.');
-    }
+  static error404() {
+    return new ApiError('Resource not found.');
+  }
 
 }

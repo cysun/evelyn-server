@@ -9,10 +9,10 @@ const ApiError = require('./models/error.model');
  * functions can access it. If signature verificatin fails ???
  */
 passport.use(new passportJWT.Strategy({
-    secretOrKey: jwtSecret,
-    jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken()
+  secretOrKey: jwtSecret,
+  jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken()
 }, function (payload, done) {
-    return done(null, payload);
+  return done(null, payload);
 }));
 
 module.exports = passport;
