@@ -5,7 +5,7 @@ const api = request.defaults({
   json: true
 });
 const cysun = {
-  id: '111111111111111111111111',
+  id: 1000,
   username: 'cysun',
   password: 'abcd',
   email: 'cysun@aol.com'
@@ -28,7 +28,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Get Bookmark By Id As Owner', function (done) {
     api.get({
-      url: '/bookmarks/111111111111111111111111',
+      url: '/bookmarks/3000',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       }
@@ -41,7 +41,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Get Bookmark By Id As Non-Owner', function (done) {
     api.get({
-      url: '/bookmarks/222222222222222222222222',
+      url: '/bookmarks/3001',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       }
@@ -53,7 +53,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Get Bookmark By Book Id', function (done) {
     api.get({
-      url: '/bookmarks/book/111111111111111111111111',
+      url: '/bookmarks/book/2000',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       }
@@ -99,7 +99,7 @@ describe('Bookmarks API Tests:', function () {
         'Authorization': 'Bearer ' + cysunToken
       },
       body: {
-        book: '333333333333333333333333',
+        book: '2002',
         position: 1
       }
     }, function (err, res, body) {
@@ -111,7 +111,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Update Bookmark As Owner', function (done) {
     api.put({
-      url: '/bookmarks/111111111111111111111111',
+      url: '/bookmarks/3000',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       },
@@ -126,7 +126,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Update Bookmark As Non-Owner', function (done) {
     api.put({
-      url: '/bookmarks/222222222222222222222222',
+      url: '/bookmarks/3001',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       },
@@ -141,7 +141,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Delete Bookmark As Owner', function (done) {
     api.delete({
-      url: '/bookmarks/111111111111111111111111',
+      url: '/bookmarks/3000',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       }
@@ -153,7 +153,7 @@ describe('Bookmarks API Tests:', function () {
 
   it('Delete Bookmark As Non-Owner', function (done) {
     api.delete({
-      url: '/bookmarks/222222222222222222222222',
+      url: '/bookmarks/3001',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       },

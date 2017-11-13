@@ -5,7 +5,7 @@ const api = request.defaults({
   json: true
 });
 const cysun = {
-  id: '111111111111111111111111',
+  id: 1000,
   username: 'cysun',
   password: 'abcd',
   email: 'cysun@aol.com'

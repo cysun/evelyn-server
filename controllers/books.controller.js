@@ -30,7 +30,10 @@ const Ebook = require('../utils/ebook');
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
 
-const Book = require('mongoose').model('Book');
+const mongoose = require('mongoose');
+const Book = mongoose.model('Book');
+const Sequence = mongoose.model('Sequence');
+const sequenceId = process.env.APP_SEQUENCE || 'app-sequence';
 const ApiError = require('../models/error.model');
 
 /* Get all books. The results should be sorted by date in descending order.
@@ -41,7 +44,7 @@ router.get('/', function (req, res, next) {
 
   let query = Book.find({
     deleted: false
-  }).sort({
+  }).select('title author date').sort({
     date: 'desc'
   });
   if (req.query.limit)
@@ -57,19 +60,29 @@ router.get('/', function (req, res, next) {
 router.get('/search', function (req, res, next) {
 
   Book.find({
-    $text: {
-      $search: req.query.term
-    }
-  }, (err, books) => {
-    if (err) return next(err);
-    res.status(200).json(books);
-  });
+      $text: {
+        $search: req.query.term
+      }
+    }, {
+      score: {
+        $meta: "textScore"
+      }
+    })
+    .select('title author date')
+    .sort({
+      score: {
+        $meta: "textScore"
+      }
+    }).exec((err, books) => {
+      if (err) return next(err);
+      res.status(200).json(books);
+    });
 });
 
 // Get book
 router.get('/:id', function (req, res, next) {
 
-  Book.findById(req.params.id, (err, book) => {
+  Book.findById(req.params.id, 'title author date', (err, book) => {
     if (err) return next(err);
     res.status(200).json(book);
   });
@@ -104,14 +117,21 @@ router.post('/', upload, function (req, res, next) {
     return;
   }
 
-  let book = new Book(req.body);
-  if (req.files[coverField])
-    book.coverExt = path.extname(req.files[coverField][0].originalname);
-  book.save((err) => {
-    if (err) return next(err);
-    saveFiles(book, req);
-    res.status(200).json(book);
-    winston.info(`${book.title} added by ${req.user.username}.`);
+  Sequence.findByIdAndUpdate(sequenceId, {
+    $inc: {
+      value: 1
+    },
+  }, (err, sequence) => {
+    let book = new Book(req.body);
+    book._id = sequence.value;
+    if (req.files[coverField])
+      book.coverExt = path.extname(req.files[coverField][0].originalname);
+    book.save((err) => {
+      if (err) return next(err);
+      saveFiles(book, req);
+      res.status(200).json(book);
+      winston.info(`${book.title} added by ${req.user.username}.`);
+    });
   });
 });
 

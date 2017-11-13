@@ -15,7 +15,7 @@ const User = require('mongoose').model('User');
 // Update user -- note that only certain fields are allowed to be changed.
 router.put('/:id', function (req, res, next) {
 
-  if (req.user._id !== req.params.id) {
+  if (req.user._id != req.params.id) {
     res.status(403).json(ApiError.error403());
     return;
   }

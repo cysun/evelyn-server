@@ -5,7 +5,7 @@ const api = request.defaults({
   json: true
 });
 const cysun = {
-  id: '111111111111111111111111',
+  id: 1000,
   username: 'cysun',
   password: 'abcd',
   email: 'cysun@aol.com'
@@ -35,21 +35,21 @@ describe('Books API Tests:', function () {
     }, function (err, res, body) {
       expect(res.statusCode).toBe(200);
       expect(body.length).toBe(2);
-      expect(body[0].title).toBe('测试书籍');
+      expect(body[0].title).toBe('Weather Games');
       done();
     });
   });
 
   it('Search Books in English', function (done) {
     api.get({
-      url: '/books/search?term=test',
+      url: '/books/search?term=game',
       headers: {
         'Authorization': 'Bearer ' + cysunToken
       }
     }, function (err, res, body) {
       expect(res.statusCode).toBe(200);
-      expect(body.length).toBe(1);
-      expect(body[0].title).toBe('Test Book');
+      expect(body.length).toBe(2);
+      expect(body[0].title).toBe('Weather Games');
       done();
     });
   });

@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
  */
 const bookSchema = new mongoose.Schema({
 
+  _id: Number,
+
   title: {
     type: String,
     required: true,
@@ -20,7 +22,15 @@ const bookSchema = new mongoose.Schema({
 
   notes: String,
 
-  coverExt: String,
+  text: String, // original text, used for fts
+
+  contentFile: String, // the name of the uploaded content file
+
+  htmlFile: String, // the name of the converted html file
+
+  coverFile: String, // the name of the uploaded cover file
+
+  thumbnailFile: String, // the name of the converted thumbnail file
 
   date: {
     type: Date,
@@ -41,7 +51,15 @@ const bookSchema = new mongoose.Schema({
 
 bookSchema.index({
   title: 'text',
-  author: 'text'
+  author: 'text',
+  text: 'text'
+}, {
+  weights: {
+    title: 10,
+    author: 10,
+    text: 1
+  },
+  name: "BooksTextIndex"
 });
 
 mongoose.model('Book', bookSchema);

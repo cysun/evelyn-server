@@ -4,7 +4,10 @@ const router = express.Router();
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
 
-const Bookmark = require('mongoose').model('Bookmark');
+const mongoose = require('mongoose');
+const Bookmark = mongoose.model('Bookmark');
+const Sequence = mongoose.model('Sequence');
+const sequenceId = process.env.APP_SEQUENCE || 'app-sequence';
 const ApiError = require('../models/error.model');
 
 // Get bookmark by id
@@ -63,12 +66,19 @@ router.get('/', function (req, res, next) {
  */
 router.post('/', function (req, res, next) {
 
-  let bookmark = new Bookmark(req.body);
-  bookmark.user = req.user._id;
-  bookmark.date = new Date();
-  bookmark.save((err) => {
-    if (err) return next(err);
-    res.status(200).json(bookmark);
+  Sequence.findByIdAndUpdate(sequenceId, {
+    $inc: {
+      value: 1
+    },
+  }, (err, sequence) => {
+    let bookmark = new Bookmark(req.body);
+    bookmark._id = sequence.value;
+    bookmark.user = req.user._id;
+    bookmark.date = new Date();
+    bookmark.save((err) => {
+      if (err) return next(err);
+      res.status(200).json(bookmark);
+    });
   });
 });
 

@@ -3,14 +3,16 @@ const Schema = mongoose.Schema;
 
 const bookmarkSchema = new Schema({
 
+  _id: Number,
+
   book: {
-    type: Schema.Types.ObjectId,
+    type: Number,
     ref: 'Book',
     required: true
   },
 
   user: {
-    type: Schema.Types.ObjectId,
+    type: Number,
     ref: 'User',
     required: true
   },
