@@ -4,8 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-const showdown = require('showdown');
-const converter = new showdown.Converter();
+const marked = require('marked');
 
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
@@ -13,10 +12,13 @@ winston.level = process.env.LOG_LEVEL || 'info';
 function Ebook(book, callback) {
 
   let ebook = {
+    title: book.title,
+    author: book.author,
+    publisher: 'Evelyn Digital Library',
     chapters: []
   };
-  if (book.coverExt)
-    ebook.cover = path.join(fileDir, book._id + '-cover' + book.coverExt);
+  if (book.coverFile)
+    ebook.cover = path.join(fileDir, book.coverFile);
 
   let chapter = {
     data: ''
@@ -25,25 +27,21 @@ function Ebook(book, callback) {
   function closeChapter() {
     if (!chapter.title)
       chapter.title = ebook.title;
-    chapter.data = converter.makeHtml(chapter.data);
+    chapter.data = marked(chapter.data);
     ebook.chapters.push(chapter);
   }
 
   let reader = readline.createInterface({
-    input: fs.createReadStream(path.join(fileDir, book._id + '-content.md'))
+    input: fs.createReadStream(path.join(fileDir, book.contentFile))
   });
 
   reader.on('line', (line) => {
-    if (line.startsWith('###')) {
-      ebook.author = line.substring(4).trim();
-    } else if (line.startsWith('##')) {
+    if (line.startsWith('##')) {
       closeChapter();
       chapter = {
         title: line.substring(3).trim(),
         data: ''
       };
-    } else if (line.startsWith('#')) {
-      ebook.title = line.substring(1).trim();
     } else {
       chapter.data += line + '\n';
     }

@@ -28,10 +28,7 @@ const bookmarkSchema = new Schema({
     required: true,
     default: Date.now
   }
-}, {
-  toJSON: {
-    virtuals: true
-  }
+
 });
 
 mongoose.model('Bookmark', bookmarkSchema);

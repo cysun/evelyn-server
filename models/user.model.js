@@ -28,13 +28,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     default: true
   }
-}, {
-  toJSON: {
-    virtuals: true
-  },
-  toObject: {
-    virtuals: true
-  }
+
 });
 
 userSchema.methods.excludeFields = function (fields = ['hash']) {

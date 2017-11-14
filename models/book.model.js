@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const mongoose = require('mongoose');
 
 /* The book content file is required and is expected to be a Markdown file with
@@ -28,6 +29,8 @@ const bookSchema = new mongoose.Schema({
 
   htmlFile: String, // the name of the converted html file
 
+  ebookFile: String, // the name of the ebook file
+
   coverFile: String, // the name of the uploaded cover file
 
   thumbnailFile: String, // the name of the converted thumbnail file
@@ -43,10 +46,7 @@ const bookSchema = new mongoose.Schema({
     required: true,
     default: false
   }
-}, {
-  toJSON: {
-    virtuals: true
-  }
+
 });
 
 bookSchema.index({
@@ -61,5 +61,9 @@ bookSchema.index({
   },
   name: "BooksTextIndex"
 });
+
+bookSchema.methods.excludeFields = function (fields = ['text']) {
+  return _.omit(this.toObject(), fields);
+}
 
 mongoose.model('Book', bookSchema);

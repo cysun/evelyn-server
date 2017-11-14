@@ -3,14 +3,10 @@ const router = express.Router();
 
 const contentField = 'content';
 const coverField = 'cover';
-const fileDir = process.env.APP_DIR + "/files/";
 const acceptableExts = ['.md', '.txt', '.jpg', '.png', '.gif'];
-
 const multer = require('multer');
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: fileDir
-  }),
+  storage: multer.memoryStorage(),
   fileFilter: function (req, file, callback) {
     let ext = path.extname(file.originalname).toLowerCase();
     callback(null, acceptableExts.includes(ext));
@@ -23,9 +19,6 @@ const upload = multer({
 
 const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
-const Epub = require('epub-gen');
-const Ebook = require('../utils/ebook');
 
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
@@ -44,7 +37,7 @@ router.get('/', function (req, res, next) {
 
   let query = Book.find({
     deleted: false
-  }).select('title author date').sort({
+  }).select('-text').sort({
     date: 'desc'
   });
   if (req.query.limit)
@@ -68,7 +61,7 @@ router.get('/search', function (req, res, next) {
         $meta: "textScore"
       }
     })
-    .select('title author date')
+    .select('-text')
     .sort({
       score: {
         $meta: "textScore"
@@ -82,30 +75,12 @@ router.get('/search', function (req, res, next) {
 // Get book
 router.get('/:id', function (req, res, next) {
 
-  Book.findById(req.params.id, 'title author date', (err, book) => {
+  Book.findById(req.params.id, '-text', (err, book) => {
     if (err) return next(err);
-    res.status(200).json(book);
-  });
-});
-
-// Get Ebook
-router.get('/:id/ebook', function (req, res, next) {
-
-  Book.findById(req.params.id, (err, book) => {
-    if (err) return next(err);
-    Ebook(book, (ebook) => {
-      new Epub({
-        title: ebook.title,
-        author: ebook.author,
-        cover: ebook.cover,
-        content: ebook.chapters,
-        output: path.join(fileDir, book._id + '.epub')
-      }).promise.then(function () {
-        res.status(200).json(book);
-      }, function (err) {
-        return next(err);
-      });
-    });
+    if (!book.deleted)
+      res.status(200).json(book);
+    else
+      res.status(404).json(ApiError.error404());
   });
 });
 
@@ -124,12 +99,28 @@ router.post('/', upload, function (req, res, next) {
   }, (err, sequence) => {
     let book = new Book(req.body);
     book._id = sequence.value;
-    if (req.files[coverField])
-      book.coverExt = path.extname(req.files[coverField][0].originalname);
+
+    let uploadedContent = req.files[contentField][0];
+    let contentExt = path.extname(uploadedContent.originalname);
+    book.text = uploadedContent.buffer.toString();
+    book.contentFile = book._id + contentExt;
+    book.htmlFile = book._id + '.html';
+    book.ebookFile = book._id + '.epub';
+    saveContentFiles(book, uploadedContent);
+
+    if (req.files[coverField]) {
+      let uploadedCover = req.files[coverField][0];
+      let coverExt = path.extname(uploadedCover.originalname);
+      book.coverFile = book._id + 'c' + coverExt;
+      book.thumbnailFile = book._id + 't' + coverExt;
+      saveCoverFiles(book, uploadedCover);
+    }
+
+    createEbook(book);
+
     book.save((err) => {
       if (err) return next(err);
-      saveFiles(book, req);
-      res.status(200).json(book);
+      res.status(200).json(book.excludeFields());
       winston.info(`${book.title} added by ${req.user.username}.`);
     });
   });
@@ -166,39 +157,62 @@ router.delete('/:id', function (req, res, next) {
   });
 });
 
-function saveFiles(book, req, append) {
+const fileDir = process.env.APP_DIR + "/files/";
 
-  if (!req.files) return;
+const marked = require('marked');
 
-  if (req.files[contentField]) {
-    let file = req.files[contentField][0];
-    let content = path.join(fileDir, book._id + '-content.md');
-    if (append) {
-      fs.readFile(file.path, (err, data) => {
-        if (err) throw err;
-        fs.appendFile(content, data, (err) => {
-          if (err) throw err;
-        });
-      });
-    } else {
-      fs.rename(file.path, content, (err) => {
-        if (err) throw err;
-      });
-    }
-  }
-
-  if (req.files[coverField]) {
-    file = req.files[coverField][0];
-    let ext = path.extname(file.originalname);
-    let cover = path.join(fileDir, book._id + '-cover' + ext);
-    fs.rename(file.path, cover, (err) => {
-      if (err) throw err
-      let thumbnail = path.join(fileDir, book._id + '-thumbnail' + ext);
-      sharp(cover).resize(48).toFile(thumbnail, (err) => {
-        if (err) throw err;
-      });
+function saveContentFiles(book, file, append) {
+  let contentFile = path.join(fileDir, book.contentFile);
+  if (append) {
+    fs.appendFile(contentFile, file.buffer, err => {
+      if (err) throw err;
     });
+  } else {
+    fs.writeFile(contentFile, file.buffer, err => {
+      if (err) throw err;
+    })
   }
+
+  var index = 1;
+  let renderer = new marked.Renderer();
+  renderer.paragraph = function (text) {
+    return '<p id="p' + index++ + '">' + text + "</p>";
+  };
+
+  let htmlFile = path.join(fileDir, book.htmlFile);
+  fs.writeFile(htmlFile, marked(book.text, {
+    renderer
+  }), err => {
+    if (err) throw err;
+  });
+}
+
+const sharp = require('sharp');
+
+function saveCoverFiles(book, file) {
+  let coverFile = path.join(fileDir, book.coverFile);
+  fs.writeFile(coverFile, file.buffer, err => {
+    if (err) throw err;
+    let thumbnailFile = path.join(fileDir, book.thumbnailFile);
+    sharp(coverFile).resize(48).toFile(thumbnailFile, err => {
+      if (err) throw err;
+    });
+  });
+}
+
+const Epub = require('epub-gen');
+const Ebook = require('../utils/ebook');
+
+function createEbook(book) {
+  Ebook(book, ebook => {
+    new Epub({
+      title: ebook.title,
+      author: ebook.author,
+      cover: ebook.cover,
+      content: ebook.chapters,
+      output: path.join(fileDir, book.ebookFile)
+    });
+  });
 }
 
 module.exports = router;
