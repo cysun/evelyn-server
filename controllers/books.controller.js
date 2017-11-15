@@ -129,17 +129,50 @@ router.post('/', upload, function (req, res, next) {
 // Update book
 router.put('/:id', upload, function (req, res, next) {
 
-  if (req.files[coverField])
-    req.body.coverExt = path.extname(req.files[coverField][0].originalname);
-
-  Book.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  }, (err, book) => {
+  Book.findById(req.params.id, (err, book) => {
     if (err) return next(err);
-    saveFiles(book, req, req.body.append);
-    res.status(200).json(book);
-    winston.info(`${book.title} updated by ${req.user.username}.`);
+
+    book.title = req.body.title;
+    book.author = req.body.author;
+    book.date = new Date();
+    if (req.body.notes) {
+      book.notes = req.body.notes;
+    }
+
+    if (req.files[contentField]) {
+      let uploadedContent = req.files[contentField][0];
+      if (req.body.append) {
+        book.text += uploadedContent.buffer;
+      } else {
+        let contentExt = path.extname(uploadedContent.originalname);
+        book.contentFile = book._id + contentExt;
+        book.text = uploadedContent.buffer;
+      }
+      saveContentFiles(book, uploadedContent, req.body.append);
+    }
+
+    if (req.files[coverField]) {
+      let uploadedCover = req.files[coverField][0];
+      let coverExt = path.extname(uploadedCover.originalname);
+      book.coverFile = book._id + 'c' + coverExt;
+      book.thumbnailFile = book._id + 't' + coverExt;
+      saveCoverFiles(book, uploadedCover);
+    }
+
+    if (req.files[contentField]) {
+      createEbook(book);
+    }
+
+    Book.updateOne({
+      _id: book._id
+    }, book, {
+      new: true,
+      runValidators: true
+    }, (err, book) => {
+      if (err) return next(err);
+      res.status(200).json(book);
+      winston.info(`${book.title} updated by ${req.user.username}.`);
+    });
   });
 });
 
@@ -162,6 +195,7 @@ const fileDir = process.env.APP_DIR + "/files/";
 const marked = require('marked');
 
 function saveContentFiles(book, file, append) {
+  console.log(`Append: ${append}`);
   let contentFile = path.join(fileDir, book.contentFile);
   if (append) {
     fs.appendFile(contentFile, file.buffer, err => {

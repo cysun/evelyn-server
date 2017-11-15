@@ -7,6 +7,7 @@ winston.level = process.env.LOG_LEVEL || 'info';
 const fileDir = process.env.APP_DIR + "/files/";
 
 router.get('/:name', function (req, res, next) {
+  res.attachment(req.params.name);
   res.sendFile(req.params.name, {
     root: fileDir
   }, function (err) {
