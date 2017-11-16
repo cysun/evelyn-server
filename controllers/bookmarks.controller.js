@@ -15,6 +15,10 @@ router.get('/:id', function (req, res, next) {
 
   Bookmark.findById(req.params.id, (err, bookmark) => {
     if (err) return next(err);
+    if (!bookmark) {
+      res.status(404).json(ApiError.error404());
+      return;
+    }
     if (bookmark.user != req.user._id) {
       res.status(403).json(ApiError.error403());
       return;
@@ -47,7 +51,10 @@ router.get('/', function (req, res, next) {
 
   let query = Bookmark.find({
       user: req.user._id
-    }).populate('book')
+    }).populate({
+      path: 'book',
+      select: '-text'
+    })
     .sort({
       date: 'desc'
     });
@@ -82,7 +89,25 @@ router.post('/', function (req, res, next) {
   });
 });
 
-// Update bookmark - the only updatable field is position.
+// Update bookmark - the only updatable fields are position and date
+router.put('/book/:bookId', function (req, res, next) {
+
+  Bookmark.findOneAndUpdate({
+      book: req.params.bookId,
+      user: req.user._id
+    }, {
+      position: req.body.position,
+      date: req.body.date ? req.body.date : new Date()
+    }, {
+      new: true
+    },
+    (err, bookmark) => {
+      if (err) return next(err);
+      res.status(200).json(bookmark);
+    });
+});
+
+// Update bookmark - the only updatable fields are position and date
 router.put('/:id', function (req, res, next) {
 
   Bookmark.findById(req.params.id, (err, bookmark) => {
@@ -93,7 +118,7 @@ router.put('/:id', function (req, res, next) {
     }
     Bookmark.findByIdAndUpdate(req.params.id, {
         position: req.body.position,
-        date: new Date()
+        date: req.body.date ? req.body.date : new Date()
       }, {
         new: true
       },
@@ -118,6 +143,17 @@ router.delete('/:id', function (req, res, next) {
       res.status(200).json(bookmark);
     });
   });
+});
+
+// Delete all bookmarks
+router.delete('/', function (req, res, next) {
+
+  Bookmark.remove({
+    user: req.user._id
+  }, err => {
+    if (err) return next(err);
+    res.status(200).end();
+  })
 });
 
 module.exports = router;

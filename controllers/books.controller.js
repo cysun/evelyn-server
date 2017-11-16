@@ -210,7 +210,7 @@ function saveContentFiles(book, file, append) {
   var index = 1;
   let renderer = new marked.Renderer();
   renderer.paragraph = function (text) {
-    return '<p id="p' + index++ + '">' + text + "</p>";
+    return '<p data-index="' + index++ + '">' + text + "</p>";
   };
 
   let htmlFile = path.join(fileDir, book.htmlFile);
