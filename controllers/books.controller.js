@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
+const fileDir = process.env.APP_DIR + "/files/";
 const contentField = 'content';
 const coverField = 'cover';
 const acceptableExts = ['.md', '.txt', '.jpg', '.png', '.gif'];
 const multer = require('multer');
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: fileDir
+  }),
   fileFilter: function (req, file, callback) {
     let ext = path.extname(file.originalname).toLowerCase();
     callback(null, acceptableExts.includes(ext));
@@ -19,6 +22,7 @@ const upload = multer({
 
 const fs = require('fs');
 const path = require('path');
+const fts = require('../fts');
 
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
@@ -37,7 +41,7 @@ router.get('/', function (req, res, next) {
 
   let query = Book.find({
     deleted: false
-  }).select('-text').sort({
+  }).sort({
     date: 'desc'
   });
   if (req.query.limit)
@@ -52,30 +56,16 @@ router.get('/', function (req, res, next) {
 // Search books
 router.get('/search', function (req, res, next) {
 
-  Book.find({
-      $text: {
-        $search: req.query.term
-      }
-    }, {
-      score: {
-        $meta: "textScore"
-      }
-    })
-    .select('-text')
-    .sort({
-      score: {
-        $meta: "textScore"
-      }
-    }).exec((err, books) => {
-      if (err) return next(err);
-      res.status(200).json(books);
-    });
+  fts.search(req.query.term, (err, books) => {
+    if (err) return next(err);
+    res.status(200).json(books);
+  });
 });
 
 // Get book
 router.get('/:id', function (req, res, next) {
 
-  Book.findById(req.params.id, '-text', (err, book) => {
+  Book.findById(req.params.id, (err, book) => {
     if (err) return next(err);
     if (!book.deleted)
       res.status(200).json(book);
@@ -100,14 +90,6 @@ router.post('/', upload, function (req, res, next) {
     let book = new Book(req.body);
     book._id = sequence.value;
 
-    let uploadedContent = req.files[contentField][0];
-    let contentExt = path.extname(uploadedContent.originalname);
-    book.text = uploadedContent.buffer.toString();
-    book.contentFile = book._id + contentExt;
-    book.htmlFile = book._id + '.html';
-    book.ebookFile = book._id + '.epub';
-    saveContentFiles(book, uploadedContent);
-
     if (req.files[coverField]) {
       let uploadedCover = req.files[coverField][0];
       let coverExt = path.extname(uploadedCover.originalname);
@@ -116,12 +98,17 @@ router.post('/', upload, function (req, res, next) {
       saveCoverFiles(book, uploadedCover);
     }
 
-    createEbook(book);
+    let uploadedContent = req.files[contentField][0];
+    let contentExt = path.extname(uploadedContent.originalname);
+    book.contentFile = book._id + contentExt;
+    book.htmlFile = book._id + '.html';
+    book.ebookFile = book._id + '.epub';
+    saveContentFiles(book, uploadedContent);
 
     book.save((err) => {
       if (err) return next(err);
-      res.status(200).json(book.excludeFields());
-      winston.info(`${book.title} added by ${req.user.username}.`);
+      res.status(200).json(book);
+      winston.info(`${book._id} added by ${req.user.username}.`);
     });
   });
 });
@@ -139,18 +126,6 @@ router.put('/:id', upload, function (req, res, next) {
       book.notes = req.body.notes;
     }
 
-    if (req.files[contentField]) {
-      let uploadedContent = req.files[contentField][0];
-      if (req.body.append) {
-        book.text += uploadedContent.buffer;
-      } else {
-        let contentExt = path.extname(uploadedContent.originalname);
-        book.contentFile = book._id + contentExt;
-        book.text = uploadedContent.buffer;
-      }
-      saveContentFiles(book, uploadedContent, req.body.append);
-    }
-
     if (req.files[coverField]) {
       let uploadedCover = req.files[coverField][0];
       let coverExt = path.extname(uploadedCover.originalname);
@@ -160,7 +135,11 @@ router.put('/:id', upload, function (req, res, next) {
     }
 
     if (req.files[contentField]) {
+      let uploadedContent = req.files[contentField][0];
+      saveContentFiles(book, uploadedContent, req.body.append);
+    } else {
       createEbook(book);
+      fts.index(book);
     }
 
     Book.updateOne({
@@ -171,7 +150,7 @@ router.put('/:id', upload, function (req, res, next) {
     }, (err, book) => {
       if (err) return next(err);
       res.status(200).json(book);
-      winston.info(`${book.title} updated by ${req.user.username}.`);
+      winston.info(`${book._id} updated by ${req.user.username}.`);
     });
   });
 });
@@ -185,47 +164,20 @@ router.delete('/:id', function (req, res, next) {
     new: true
   }, (err, book) => {
     if (err) return next(err);
+    fts.deindex(book);
     res.status(200).json(book);
-    winston.info(`${book.title} deleted by ${req.user.username}.`);
+    winston.info(`${book._id} deleted by ${req.user.username}.`);
   });
 });
 
-const fileDir = process.env.APP_DIR + "/files/";
-
-const marked = require('marked');
-
-function saveContentFiles(book, file, append) {
-  console.log(`Append: ${append}`);
-  let contentFile = path.join(fileDir, book.contentFile);
-  if (append) {
-    fs.appendFile(contentFile, file.buffer, err => {
-      if (err) throw err;
-    });
-  } else {
-    fs.writeFile(contentFile, file.buffer, err => {
-      if (err) throw err;
-    })
-  }
-
-  var index = 1;
-  let renderer = new marked.Renderer();
-  renderer.paragraph = function (text) {
-    return '<p data-index="' + index++ + '">' + text + "</p>";
-  };
-
-  let htmlFile = path.join(fileDir, book.htmlFile);
-  fs.writeFile(htmlFile, marked(book.text, {
-    renderer
-  }), err => {
-    if (err) throw err;
-  });
-}
-
 const sharp = require('sharp');
+const marked = require('marked');
+const Epub = require('epub-gen');
+const Ebook = require('../utils/ebook');
 
 function saveCoverFiles(book, file) {
   let coverFile = path.join(fileDir, book.coverFile);
-  fs.writeFile(coverFile, file.buffer, err => {
+  fs.rename(file.path, coverFile, err => {
     if (err) throw err;
     let thumbnailFile = path.join(fileDir, book.thumbnailFile);
     sharp(coverFile).resize(48).toFile(thumbnailFile, err => {
@@ -234,8 +186,46 @@ function saveCoverFiles(book, file) {
   });
 }
 
-const Epub = require('epub-gen');
-const Ebook = require('../utils/ebook');
+function saveContentFiles(book, file, append) {
+  let contentFile = path.join(fileDir, book.contentFile);
+  if (append) {
+    fs.readFile(file.path, (err, data) => {
+      if (err) throw err;
+      fs.appendFile(contentFile, data, (err) => {
+        if (err) throw err;
+        createHtmlFile(book);
+        createEbook(book);
+        fts.index(book);
+      });
+      fs.unlink(file.path, err => winston.error(err));
+    });
+  } else {
+    fs.rename(file.path, contentFile, (err) => {
+      if (err) throw err;
+      createHtmlFile(book);
+      createEbook(book);
+      fts.index(book);
+    });
+  }
+}
+
+function createHtmlFile(book) {
+  let index = 1;
+  let renderer = new marked.Renderer();
+  renderer.paragraph = function (text) {
+    return '<p data-index="' + index++ + '">' + text + "</p>";
+  };
+  let contentFile = path.join(fileDir, book.contentFile);
+  let htmlFile = path.join(fileDir, book.htmlFile);
+  fs.readFile(contentFile, (err, data) => {
+    if (err) throw err;
+    fs.writeFile(htmlFile, marked(data.toString(), {
+      renderer
+    }), err => {
+      if (err) throw err;
+    });
+  });
+}
 
 function createEbook(book) {
   Ebook(book, ebook => {

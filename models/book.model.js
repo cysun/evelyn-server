@@ -23,8 +23,6 @@ const bookSchema = new mongoose.Schema({
 
   notes: String,
 
-  text: String, // original text, used for fts
-
   contentFile: String, // the name of the uploaded content file
 
   htmlFile: String, // the name of the converted html file
@@ -48,22 +46,5 @@ const bookSchema = new mongoose.Schema({
   }
 
 });
-
-bookSchema.index({
-  title: 'text',
-  author: 'text',
-  text: 'text'
-}, {
-  weights: {
-    title: 10,
-    author: 10,
-    text: 1
-  },
-  name: "BooksTextIndex"
-});
-
-bookSchema.methods.excludeFields = function (fields = ['text']) {
-  return _.omit(this.toObject(), fields);
-}
 
 mongoose.model('Book', bookSchema);

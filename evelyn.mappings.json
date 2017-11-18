@@ -1,0 +1,44 @@
+{
+  "mappings": {
+    "book": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "analyzer": "smartcn",
+          "boost": 10
+        },
+        "author": {
+          "type": "text",
+          "analyzer": "smartcn",
+          "boost": 10
+        },
+        "note": {
+          "type": "text",
+          "analyzer": "smartcn"
+        },
+        "text": {
+          "type": "text",
+          "analyzer": "smartcn"
+        },
+        "contentFile": {
+          "type": "keyword"
+        },
+        "htmlFile": {
+          "type": "keyword"
+        },
+        "ebookFile": {
+          "type": "keyword"
+        },
+        "coverFile": {
+          "type": "keyword"
+        },
+        "thumbnailFile": {
+          "type": "keyword"
+        },
+        "date": {
+          "type": "date"
+        }
+      }
+    }
+  }
+}

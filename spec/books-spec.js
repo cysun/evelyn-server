@@ -40,18 +40,4 @@ describe('Books API Tests:', function () {
     });
   });
 
-  it('Search Books in English', function (done) {
-    api.get({
-      url: '/books/search?term=game',
-      headers: {
-        'Authorization': 'Bearer ' + cysunToken
-      }
-    }, function (err, res, body) {
-      expect(res.statusCode).toBe(200);
-      expect(body.length).toBe(2);
-      expect(body[0].title).toBe('Weather Games');
-      done();
-    });
-  });
-
 });

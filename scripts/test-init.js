@@ -1,13 +1,16 @@
 require('dotenv').config();
-const dbURI = process.env.EVELYN_DBURI || 'mongodb://localhost/evelyn';
+const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
 const mongodb = require('mongodb');
+const indexer = require('../indexer');
+
+dbinit();
+indexer.deindexAll();
 
 async function dbinit() {
-
   const db = await mongodb.MongoClient.connect(dbURI);
 
-  await dropCollections(db);
-  console.log(`collection(s) dropped.`);
+  result = await dropCollections(db);
+  console.log(`${result} collection(s) dropped.`);
 
   result = await createIdSequence(db);
   console.log(`${result.insertedCount} sequence(s) created.`);
@@ -21,13 +24,8 @@ async function dbinit() {
   result = await insertBookmarks(db);
   console.log(`${result.insertedCount} document(s) inserted into bookmarks.`);
 
-  await createIndexes(db);
-  console.log(`indexes created.`);
-
   db.close();
 }
-
-dbinit();
 
 async function dropCollections(db) {
   let collections = [];
@@ -66,7 +64,6 @@ function insertBooks(db) {
     _id: 2000,
     title: 'Programming JavaScript',
     author: 'John Doe',
-    text: 'This is a book about programming games using JavaScript.',
     date: new Date(2016, 5, 15),
     deleted: false,
     __v: 0
@@ -74,7 +71,6 @@ function insertBooks(db) {
     _id: 2001,
     title: 'Weather Games',
     author: 'Jane Doe',
-    text: 'The weather today is not bad',
     date: new Date(2017, 9, 10),
     deleted: false,
     __v: 0
@@ -104,19 +100,4 @@ function insertBookmarks(db) {
     date: new Date(2017, 9, 20),
     __v: 0
   }]);
-}
-
-function createIndexes(db) {
-  return db.collection('books').createIndex({
-    title: 'text',
-    author: 'text',
-    text: 'text'
-  }, {
-    weights: {
-      title: 10,
-      author: 10,
-      text: 1
-    },
-    name: "BooksTextIndex"
-  });
 }
