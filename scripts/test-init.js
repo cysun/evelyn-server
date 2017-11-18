@@ -1,10 +1,10 @@
 require('dotenv').config();
 const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
 const mongodb = require('mongodb');
-const indexer = require('../indexer');
+const fts = require('../fts');
 
 dbinit();
-indexer.deindexAll();
+fts.deindexAll();
 
 async function dbinit() {
   const db = await mongodb.MongoClient.connect(dbURI);
@@ -28,10 +28,10 @@ async function dbinit() {
 }
 
 async function dropCollections(db) {
-  let collections = [];
-  await db.collections().then(results => collections = results);
+  collections = await db.collections();
   for (let i = 0; i < collections.length; ++i)
     await collections[i].drop();
+  return collections.length;
 }
 
 function createIdSequence(db) {

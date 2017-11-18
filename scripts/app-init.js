@@ -10,6 +10,10 @@ const users = [];
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
+createUsers();
+dbinit();
+fts.deindexAll();
+
 function createUsers() {
   console.log('add <username> <password> | done');
   readlineSync.promptCLLoop({
@@ -58,7 +62,3 @@ async function dbinit() {
 
   db.close();
 }
-
-createUsers();
-dbinit();
-fts.deindexAll();

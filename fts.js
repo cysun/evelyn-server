@@ -12,20 +12,31 @@ const fileDir = process.env.APP_DIR + "/files/";
 const fs = require('fs');
 const path = require('path');
 
-exports.deindex = function (book) {
+const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
+const mongodb = require('mongodb');
+
+module.exports = {
+  deindex,
+  deindexAll,
+  index,
+  indexAll,
+  search
+};
+
+function deindex(book) {
   request.delete('/book/' + book._id, (err) => {
     if (err) winston.error(`Failed to delete book ${book._id}`);
     else winston.info(`Book ${book._id} removed from fts index`);
   });
 }
 
-exports.deindexAll = function () {
+function deindexAll() {
   request.delete('/', (err) => {
     if (err) winston.error('Failed to delete index');
     else winston.info('FTS index deleted');
     request.put({
       uri: '/',
-      body: JSON.parse(fs.readFileSync(path.join(__dirname, 'evelyn.mappings.json')))
+      body: JSON.parse(fs.readFileSync(path.join(__dirname, 'fts.mappings.json')))
     }, (err) => {
       if (err) winston.error('Fail to create index');
       else winston.info('FTS index created');
@@ -33,7 +44,7 @@ exports.deindexAll = function () {
   });
 }
 
-exports.index = function (book) {
+function index(book) {
   request.put({
     uri: '/book/' + book._id,
     body: {
@@ -54,11 +65,8 @@ exports.index = function (book) {
   });
 }
 
-const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
-const mongodb = require('mongodb');
-
-exports.indexAll = function () {
-  mongodb.MongoClient.connect(url, function (err, db) {
+function indexAll() {
+  mongodb.MongoClient.connect(dbURI, function (err, db) {
     if (err) {
       winston.error('Failed to connect to db');
       return;
@@ -68,19 +76,15 @@ exports.indexAll = function () {
       if (err) {
         winston.error('Failed to query db')
       } else {
-        books.forEach(index(book));
+        console.log(books);
+        books.forEach(index);
       }
       db.close();
     });
   });
 }
 
-exports.reindexAll = function () {
-  deindexAll();
-  indexAll();
-}
-
-exports.search = function (term, cb) {
+function search(term, cb) {
   request.post({
     uri: '/book/_search',
     body: {

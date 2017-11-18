@@ -62,6 +62,14 @@ router.get('/search', function (req, res, next) {
   });
 });
 
+// Reindex books
+router.get('/reindex', function (req, res, next) {
+
+  fts.deindexAll();
+  fts.indexAll();
+  res.status(200).end();
+});
+
 // Get book
 router.get('/:id', function (req, res, next) {
 
