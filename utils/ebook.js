@@ -1,4 +1,4 @@
-const fileDir = process.env.APP_DIR + "/files/";
+const fileDir = process.env.FILE_DIR;
 
 const fs = require('fs');
 const path = require('path');
@@ -36,12 +36,16 @@ function Ebook(book, callback) {
   });
 
   reader.on('line', (line) => {
-    if (line.startsWith('##')) {
+    if (line.startsWith('###')) {
+      // skip author
+    } else if (line.startsWith('##')) {
       closeChapter();
       chapter = {
         title: line.substring(3).trim(),
         data: ''
       };
+    } else if (line.startsWith('#')) {
+      // skip title
     } else {
       chapter.data += line + '\n';
     }

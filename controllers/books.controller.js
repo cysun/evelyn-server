@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const fileDir = process.env.APP_DIR + "/files/";
+const fileDir = process.env.FILE_DIR;
 const contentField = 'content';
 const coverField = 'cover';
 const acceptableExts = ['.md', '.txt', '.jpg', '.png', '.gif'];
@@ -30,7 +30,7 @@ winston.level = process.env.LOG_LEVEL || 'info';
 const mongoose = require('mongoose');
 const Book = mongoose.model('Book');
 const Sequence = mongoose.model('Sequence');
-const sequenceId = process.env.APP_SEQUENCE || 'app-sequence';
+const sequenceId = process.env.DB_SEQUENCE;
 const ApiError = require('../models/error.model');
 
 /* Get all books. The results should be sorted by date in descending order.

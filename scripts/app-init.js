@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
 const mongodb = require('mongodb');
 const fts = require('../fts');
 
@@ -49,7 +48,10 @@ async function createIdSequence(db) {
 }
 
 async function dbinit() {
-  const db = await mongodb.MongoClient.connect(dbURI);
+  const db = await mongodb.MongoClient.connect(process.env.DB_URI);
+
+  result = await db.authenticate(process.env.DB_USER, process.env.DB_PASS);
+  console.log(`Authentication successful: ${result}`);
 
   result = await dropCollections(db);
   console.log(`${result} collection(s) dropped.`);

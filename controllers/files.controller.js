@@ -4,7 +4,7 @@ const router = express.Router();
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
 
-const fileDir = process.env.APP_DIR + "/files/";
+const fileDir = process.env.FILE_DIR;
 
 router.get('/:name', function (req, res, next) {
   res.attachment(req.params.name);

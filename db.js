@@ -6,11 +6,13 @@ const bluebird = require('bluebird');
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
 
-const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
+const dbURI = process.env.DB_URI;
 mongoose.Promise = bluebird;
 mongoose.connect(dbURI, {
   useMongoClient: true,
-  promiseLibrary: bluebird
+  promiseLibrary: bluebird,
+  user: process.env.DB_USER,
+  pass: process.env.DB_PASS
 });
 
 mongoose.connection.on('connected', () => {

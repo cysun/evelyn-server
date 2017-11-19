@@ -4,15 +4,15 @@ const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
 
 const request = require("request").defaults({
-  baseUrl: process.env.APP_FTS_URI || 'http://localhost:9200/evelyn',
+  baseUrl: process.env.FTS_URI,
   json: true
 });
 
-const fileDir = process.env.APP_DIR + "/files/";
+const fileDir = process.env.FILE_DIR;
 const fs = require('fs');
 const path = require('path');
 
-const dbURI = process.env.APP_DB_URI || 'mongodb://localhost/evelyn';
+const dbURI = process.env.DB_URI;
 const mongodb = require('mongodb');
 
 module.exports = {
