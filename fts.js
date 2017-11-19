@@ -94,6 +94,7 @@ function search(term, cb) {
       "query": {
         "multi_match": {
           "query": term,
+          "type": "phrase",
           "fields": ["title", "author", "notes", "text"]
         }
       }
