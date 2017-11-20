@@ -20,6 +20,7 @@ module.exports = {
   deindexAll,
   index,
   indexAll,
+  update,
   search
 };
 
@@ -81,6 +82,18 @@ function indexAll() {
       }
       db.close();
     });
+  });
+}
+
+function update(book, update) {
+  request.post({
+    uri: '/book/' + book._id + '/_update',
+    body: {
+      "doc": update
+    }
+  }, err => {
+    if (err) winston.error(err);
+    else winston.info(`Book ${book._id} fts updated`);
   });
 }
 

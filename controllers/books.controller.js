@@ -70,6 +70,31 @@ router.get('/reindex', function (req, res, next) {
   res.status(200).end();
 });
 
+// Update ebooks
+router.get('/ebooks', function (req, res, next) {
+
+  Book.find({
+    deleted: false
+  }, (err, books) => {
+    books.forEach(book => {
+      if (!book.ebookFile) {
+        book.ebookFile = book._id + '.epub';
+        createEbook(book);
+        let update = {
+          ebookFile: book.ebookFile
+        };
+        Book.findByIdAndUpdate(book._id, update, () => {});
+        fts.update(book, update);
+      } else {
+        let ebookFile = path.join(fileDir, book.ebookFile);
+        if (fs.lstatSync(ebookFile).mtime < book.date)
+          createEbook(book);
+      }
+    });
+    res.status(200).end();
+  });
+});
+
 // Get book
 router.get('/:id', function (req, res, next) {
 
@@ -97,6 +122,7 @@ router.post('/', upload, function (req, res, next) {
   }, (err, sequence) => {
     let book = new Book(req.body);
     book._id = sequence.value;
+    book.date = new Date();
 
     if (req.files[coverField]) {
       let uploadedCover = req.files[coverField][0];
@@ -110,7 +136,6 @@ router.post('/', upload, function (req, res, next) {
     let contentExt = path.extname(uploadedContent.originalname);
     book.contentFile = book._id + contentExt;
     book.htmlFile = book._id + '.html';
-    book.ebookFile = book._id + '.epub';
     saveContentFiles(book, uploadedContent);
 
     book.save((err) => {
@@ -146,18 +171,16 @@ router.put('/:id', upload, function (req, res, next) {
       let uploadedContent = req.files[contentField][0];
       saveContentFiles(book, uploadedContent, req.body.append);
     } else {
-      createEbook(book);
       fts.index(book);
     }
 
     Book.updateOne({
       _id: book._id
     }, book, {
-      new: true,
       runValidators: true
-    }, (err, book) => {
+    }, err => {
       if (err) return next(err);
-      res.status(200).json(book);
+      res.status(200).end();
       winston.info(`${book._id} updated by ${req.user.username}.`);
     });
   });
@@ -202,7 +225,6 @@ function saveContentFiles(book, file, append) {
       fs.appendFile(contentFile, data, (err) => {
         if (err) throw err;
         createHtmlFile(book);
-        createEbook(book);
         fts.index(book);
       });
       fs.unlink(file.path, err => winston.error(err));
@@ -211,7 +233,6 @@ function saveContentFiles(book, file, append) {
     fs.rename(file.path, contentFile, (err) => {
       if (err) throw err;
       createHtmlFile(book);
-      createEbook(book);
       fts.index(book);
     });
   }

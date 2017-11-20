@@ -48,17 +48,24 @@ app.use('/api/books', books);
 app.use('/api/files', files);
 app.use('/api/bookmarks', bookmarks);
 
+/* support for angular's path location strategy -- request to any nonexistent
+ * page will receive /public/index.html except for API calls.
+ */
+app.all('*', function (req, res, next) {
+  if (req.originalUrl.startsWith('/api/')) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+  } else {
+    res.status(200).sendFile(path.join(__dirname, 'public/index.html'));
+  }
+});
+
 /* error-handling middleware */
 
 const ApiError = require('./models/error.model');
 const winston = require('winston');
 winston.level = process.env.LOG_LEVEL || 'info';
-
-app.use(function (req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
 
 // api error handler
 app.use(function (err, req, res, next) {
